@@ -5,11 +5,14 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "nodemon src/server.ts",
+    "dev": "npm run setup && nodemon src/server.ts",
+    "dev:only": "nodemon src/server.ts",
+    "setup": "npm run db:generate && npm run db:seed && npm run create-test-user",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
+    "create-test-user": "ts-node scripts/create-test-user.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

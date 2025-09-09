@@ -24,6 +24,23 @@ class TokenManager {
   static hasToken(): boolean {
     return !!this.getToken();
   }
+
+  // 모든 인증 관련 데이터 정리
+  static clearAll(): void {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // 토큰 제거
+      this.removeToken();
+      
+      // 다른 인증 관련 데이터가 있다면 여기서 정리
+      // 예시: localStorage.removeItem('user_preferences');
+      // 예시: localStorage.removeItem('app_settings');
+      
+    } catch (error) {
+      console.warn('TokenManager 정리 중 에러:', error);
+    }
+  }
 }
 
 // fetch 설정 타입
@@ -115,7 +132,15 @@ class ApiClient {
       // 에러 응답 처리
       if (!response.ok || !data.success) {
         if (response.status === 401) {
-          TokenManager.removeToken();
+          // 인증 실패 시 모든 데이터 정리
+          TokenManager.clearAll();
+          
+          // 메인 페이지로 리다이렉트 (클라이언트 사이드에서만)
+          if (typeof window !== 'undefined') {
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 100);
+          }
         }
         throw new ApiError(data.message || '요청에 실패했습니다', response.status);
       }

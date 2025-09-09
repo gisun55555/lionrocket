@@ -2,12 +2,17 @@
 
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
-import { MessageCircle, Users, Sparkles, ArrowRight } from 'lucide-react';
+import { LoginModal } from '@/shared/components/login-modal';
+import { MessageCircle, Users, Sparkles, ArrowRight, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/shared/hooks';
 
 export default function HomePage() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const router = useRouter();
+  const { data: user, isLoading } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
@@ -33,21 +38,45 @@ export default function HomePage() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Link href="/characters">
-              <Button size="lg" className="text-lg px-8 py-6">
-                <Sparkles className="mr-2 h-5 w-5" />
-                시작하기
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="text-lg px-8 py-6"
-              onClick={() => setIsLoginModalOpen(true)}
-            >
-              로그인
-            </Button>
+            {isLoading ? (
+              <div className="flex gap-4">
+                <div className="h-12 w-32 bg-muted animate-pulse rounded-lg" />
+                <div className="h-12 w-24 bg-muted animate-pulse rounded-lg" />
+              </div>
+            ) : user ? (
+              // 로그인된 사용자를 위한 버튼들
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/characters">
+                  <Button size="lg" className="text-lg px-8 py-6">
+                    <Bot className="mr-2 h-5 w-5" />
+                    캐릭터 선택하기
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <div className="text-sm text-muted-foreground mt-2 sm:mt-0 sm:ml-4 flex items-center">
+                  👋 안녕하세요, <span className="font-medium ml-1">{user.name}</span>님!
+                </div>
+              </div>
+            ) : (
+              // 비로그인 사용자를 위한 버튼들
+              <>
+                <Link href="/characters">
+                  <Button size="lg" className="text-lg px-8 py-6">
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    시작하기
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="text-lg px-8 py-6"
+                  onClick={() => setIsLoginModalOpen(true)}
+                >
+                  로그인
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Character Preview */}
@@ -123,27 +152,15 @@ export default function HomePage() {
         </blockquote>
       </section>
 
-      {/* Login Modal Placeholder */}
-      {isLoginModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold mb-4">로그인</h2>
-                <p className="text-slate-600 dark:text-slate-400 mb-6">
-                  로그인 기능은 곧 구현될 예정입니다.
-                </p>
-                <Button
-                  onClick={() => setIsLoginModalOpen(false)}
-                  className="w-full"
-                >
-                  확인
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSuccess={() => {
+          // 로그인 성공 시 캐릭터 선택 페이지로 이동
+          router.push('/characters');
+        }}
+      />
     </div>
   );
 }

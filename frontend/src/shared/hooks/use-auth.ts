@@ -62,19 +62,41 @@ export function useLogout() {
     mutationFn: authApi.logout,
     retry: false, // 로그아웃은 재시도 하지 않음
     onSuccess: () => {
-      // 토큰 제거
-      TokenManager.removeToken();
-      
-      // 모든 쿼리 캐시 클리어
-      queryClient.clear();
+      // 로그아웃 성공 시 모든 데이터 정리
+      cleanupAuthData(queryClient);
     },
     onError: (error) => {
-      // 에러가 있어도 토큰은 제거
-      TokenManager.removeToken();
-      queryClient.clear();
+      // 에러가 있어도 로컬 데이터는 정리
+      cleanupAuthData(queryClient);
       console.error('로그아웃 에러:', error);
     },
   });
+}
+
+// 로그아웃 시 모든 인증 관련 데이터 정리 함수
+function cleanupAuthData(queryClient: ReturnType<typeof useQueryClient>) {
+  // 1. 모든 인증 관련 로컬스토리지 데이터 정리
+  TokenManager.clearAll();
+  
+  // 2. 모든 쿼리 캐시 클리어
+  queryClient.clear();
+  
+  // 3. 특정 쿼리들만 무효화하는 경우 (옵션)
+  // queryClient.removeQueries({ queryKey: ['auth'] });
+  // queryClient.removeQueries({ queryKey: ['characters'] });
+  // queryClient.removeQueries({ queryKey: ['messages'] });
+  
+  console.log('✅ 로그아웃 데이터 정리 완료');
+}
+
+// 인증 상태 확인 (단순한 boolean 반환)
+export function useIsAuthenticated() {
+  const { data: user, isLoading } = useAuth();
+  return {
+    isAuthenticated: !!user,
+    isLoading,
+    user,
+  };
 }
 
 // 이메일 중복 확인 (재시도 로직 적용)
@@ -121,14 +143,4 @@ export function useRegister() {
       console.error('회원가입 실패:', error);
     },
   });
-}
-
-// 로그인 상태 확인 유틸리티
-export function useIsAuthenticated() {
-  const { data: user, isLoading } = useAuth();
-  return {
-    isAuthenticated: !!user && !isLoading,
-    isLoading,
-    user,
-  };
 }

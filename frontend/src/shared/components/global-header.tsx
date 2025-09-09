@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bot, LogIn, LogOut, User } from 'lucide-react';
+import { Bot, LogIn, LogOut } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
@@ -13,49 +13,26 @@ import {
 } from '@/shared/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
 import { ThemeToggle } from './theme-toggle';
-import { TokenManager } from '@/shared/apis';
-import { useState, useEffect } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+import { LoginModal } from './login-modal';
+import { useAuth, useLogout } from '@/shared/hooks';
+import { useState } from 'react';
 
 export function GlobalHeader() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const { data: user, isLoading } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const logoutMutation = useLogout();
 
-  // 사용자 상태 확인
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (TokenManager.hasToken()) {
-        try {
-          // TODO: API 호출로 사용자 정보 가져오기
-          // const userData = await authApi.getMe();
-          // setUser(userData);
-          
-          // 임시로 더미 데이터 사용
-          setUser({
-            id: '1',
-            email: 'test@example.com',
-            name: '테스트 사용자'
-          });
-        } catch {
-          TokenManager.removeToken();
-          setUser(null);
-        }
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  const handleLogout = () => {
-    TokenManager.removeToken();
-    setUser(null);
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      // 로그아웃 후 메인 페이지로 이동
+      router.push('/');
+    } catch (error) {
+      console.error('로그아웃 실패:', error);
+      // 에러가 있어도 메인 페이지로 이동 (로컬 데이터는 이미 정리됨)
+      router.push('/');
+    }
   };
 
   const openLoginModal = () => {
@@ -83,7 +60,9 @@ export function GlobalHeader() {
             <ThemeToggle />
 
             {/* 로그인/사용자 메뉴 */}
-            {user ? (
+            {isLoading ? (
+              <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+            ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -111,9 +90,13 @@ export function GlobalHeader() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <DropdownMenuItem 
+                    onClick={handleLogout} 
+                    className="cursor-pointer"
+                    disabled={logoutMutation.isPending}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
-                    로그아웃
+                    {logoutMutation.isPending ? '로그아웃 중...' : '로그아웃'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -127,39 +110,14 @@ export function GlobalHeader() {
         </div>
       </header>
 
-      {/* 로그인 모달 - 나중에 구현 */}
-      {isLoginModalOpen && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-          <div className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]">
-            <div className="bg-background p-6 shadow-lg border rounded-lg w-[400px]">
-              <h2 className="text-lg font-semibold mb-4">로그인</h2>
-              <p className="text-muted-foreground mb-4">로그인 기능은 곧 구현됩니다.</p>
-              <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsLoginModalOpen(false)}
-                >
-                  닫기
-                </Button>
-                <Button 
-                  onClick={() => {
-                    // 임시로 로그인 처리
-                    TokenManager.setToken('dummy-token');
-                    setUser({
-                      id: '1',
-                      email: 'test@example.com',
-                      name: '테스트 사용자'
-                    });
-                    setIsLoginModalOpen(false);
-                  }}
-                >
-                  테스트 로그인
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 로그인 모달 */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSuccess={() => {
+          setIsLoginModalOpen(false);
+        }}
+      />
     </>
   );
 }

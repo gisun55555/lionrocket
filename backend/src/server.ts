@@ -36,11 +36,12 @@ app.get('/', (req, res) => {
 import authRoutes from './routes/auth';
 import characterRoutes from './routes/characters';
 import uploadRoutes from './routes/upload';
+import messageRoutes from './routes/messages';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/characters', characterRoutes);
 app.use('/api/upload', uploadRoutes);
-// app.use('/api/messages', require('./routes/messages'));
+app.use('/api/messages', messageRoutes);
 
 // 에러 핸들링 미들웨어
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

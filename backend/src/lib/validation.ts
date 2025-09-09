@@ -98,7 +98,38 @@ export const fileUploadSchema = z.object({
   buffer: z.instanceof(Buffer),
 });
 
+// 메시지 전송 검증 스키마
+export const sendMessageSchema = z.object({
+  content: z
+    .string()
+    .min(1, '메시지를 입력해주세요')
+    .max(200, '메시지는 200자 이하여야 합니다')
+    .trim(),
+  characterId: z
+    .string()
+    .min(1, '캐릭터를 선택해주세요'),
+});
+
+// 메시지 응답 타입
+export interface MessageResponse {
+  id: string;
+  content: string;
+  isUser: boolean;
+  userId: string;
+  characterId: string;
+  createdAt: string;
+}
+
+// 대화 히스토리 응답 타입
+export interface ConversationResponse {
+  characterId: string;
+  characterName: string;
+  messages: MessageResponse[];
+  totalMessages: number;
+}
+
 // 검증 미들웨어 타입
 export type CreateCharacterInput = z.infer<typeof createCharacterSchema>;
 export type UpdateCharacterInput = z.infer<typeof updateCharacterSchema>;
 export type FileUploadInput = z.infer<typeof fileUploadSchema>;
+export type SendMessageInput = z.infer<typeof sendMessageSchema>;

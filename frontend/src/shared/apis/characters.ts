@@ -13,7 +13,7 @@ export const charactersApi = {
   },
 
   getAllCharacters: async () => {
-    const response = await apiClient.fetchNoAuth<Character[]>('/characters');
+    const response = await apiClient.fetchAuth<Character[]>('/characters');
     return response.data!;
   },
 

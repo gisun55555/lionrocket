@@ -7,7 +7,7 @@ import type {
 export const uploadApi = {
   uploadImage: async (file: File) => {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('thumbnail', file);
     
     const response = await apiClient.uploadFile<FileUploadResponse>('/upload/image', formData);
     return response.data!;
@@ -15,7 +15,7 @@ export const uploadApi = {
 
   previewImage: async (file: File) => {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('thumbnail', file);
     
     const response = await apiClient.uploadFile<ImagePreviewResponse>('/upload/preview', formData);
     return response.data!;

@@ -115,14 +115,19 @@ class ApiClient {
     }
 
     try {
+      console.log(`🌐 API 요청: ${config.method || 'GET'} ${url}`);
       const response = await fetch(url, config);
+      
+      console.log(`📡 API 응답: ${response.status} ${response.statusText}`);
       
       // 응답 처리
       let data: ApiResponse<T>;
       
       try {
         data = await response.json();
+        console.log('📄 응답 데이터:', data);
       } catch {
+        console.error('❌ JSON 파싱 실패');
         throw new ApiError(
           '서버 응답을 파싱할 수 없습니다',
           response.status
@@ -131,7 +136,15 @@ class ApiClient {
 
       // 에러 응답 처리
       if (!response.ok || !data.success) {
+        console.error('❌ API 에러:', {
+          status: response.status,
+          statusText: response.statusText,
+          message: data.message,
+          data: data
+        });
+        
         if (response.status === 401) {
+          console.log('🔐 인증 실패 - 토큰 정리 및 리다이렉트');
           // 인증 실패 시 모든 데이터 정리
           TokenManager.clearAll();
           
@@ -145,11 +158,14 @@ class ApiClient {
         throw new ApiError(data.message || '요청에 실패했습니다', response.status);
       }
 
+      console.log('✅ API 요청 성공');
       return data;
     } catch (error) {
       if (error instanceof ApiError) {
+        console.error('❌ API 에러:', error.message, error.status);
         throw error;
       }
+      console.error('❌ 네트워크 에러:', error);
       throw new ApiError('네트워크 연결을 확인해주세요', 0);
     }
   }

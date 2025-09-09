@@ -11,17 +11,42 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // 미들웨어
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// CORS 설정 - 개발 환경에서는 모든 오리진 허용
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL || 'http://localhost:3000'
+    : true, // 개발 환경에서는 모든 오리진 허용
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  optionsSuccessStatus: 200
 }));
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// 정적 파일 서빙 (업로드된 이미지)
-app.use('/uploads', express.static('uploads'));
+// 정적 파일 서빙 (업로드된 이미지) - CORS 헤더 포함
+app.use('/uploads', (req, res, next) => {
+  // CORS 헤더 설정 - 개발 환경에서는 모든 오리진 허용
+  if (process.env.NODE_ENV === 'production') {
+    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
+  } else {
+    res.header('Access-Control-Allow-Origin', '*'); // 개발 환경에서는 모든 오리진 허용
+  }
+  
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // 캐시 헤더 설정
+  res.header('Cache-Control', 'public, max-age=31536000'); // 1년 캐시
+  
+  next();
+}, express.static('uploads'));
 
 // 기본 라우트
 app.get('/', (req, res) => {

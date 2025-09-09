@@ -7,12 +7,13 @@ import { MessageCircle, Users, Sparkles, ArrowRight, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/shared/hooks';
+import { useAuth, useDefaultCharacters } from '@/shared/hooks';
 
 export default function HomePage() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const router = useRouter();
   const { data: user, isLoading } = useAuth();
+  const { data: defaultCharacters, isLoading: charactersLoading } = useDefaultCharacters();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
@@ -80,43 +81,49 @@ export default function HomePage() {
           </div>
 
           {/* Character Preview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <CardContent className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <MessageCircle className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">친근한 AI 어시스턴트</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  도움이 되는 AI와 대화해보세요
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <CardContent className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full flex items-center justify-center">
-                  <Sparkles className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">창의적 작가</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  상상력이 풍부한 창작 파트너
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <CardContent className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                  <Users className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">기술 전문가</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  프로그래밍과 기술의 전문가
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          {charactersLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="p-6">
+                  <CardContent className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-muted animate-pulse rounded-full" />
+                    <div className="h-6 w-32 bg-muted animate-pulse rounded mx-auto mb-2" />
+                    <div className="h-4 w-24 bg-muted animate-pulse rounded mx-auto" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+              {defaultCharacters?.slice(0, 3).map((character, index) => {
+                const gradients = [
+                  'from-blue-500 to-purple-600',
+                  'from-pink-500 to-rose-600',
+                  'from-green-500 to-emerald-600'
+                ];
+                const icons = [MessageCircle, Sparkles, Users];
+                const IconComponent = icons[index] || MessageCircle;
+                
+                return (
+                  <Card 
+                    key={character.id}
+                    className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => router.push('/characters')}
+                  >
+                    <CardContent className="text-center">
+                      <div className={`w-16 h-16 mx-auto mb-4 bg-gradient-to-br ${gradients[index]} rounded-full flex items-center justify-center`}>
+                        <IconComponent className="h-8 w-8 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">{character.name}</h3>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        {character.prompt.slice(0, 50)}...
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
 
           {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">

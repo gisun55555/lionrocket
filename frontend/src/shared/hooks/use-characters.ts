@@ -70,12 +70,16 @@ export function useCreateCharacter() {
       // 캐릭터 목록 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: characterKeys.lists() });
       queryClient.invalidateQueries({ queryKey: characterKeys.user() });
+      queryClient.invalidateQueries({ queryKey: characterKeys.default() });
+      queryClient.invalidateQueries({ queryKey: characterKeys.list('all') });
       
       // 새 캐릭터 상세 정보 캐시에 추가
       queryClient.setQueryData(
         characterKeys.detail(newCharacter.id), 
         newCharacter
       );
+      
+      console.log('🔄 캐릭터 생성 후 쿼리 무효화 완료');
     },
     onError: (error) => {
       console.error('캐릭터 생성 실패:', error);

@@ -42,6 +42,7 @@ model Character {
   user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages Message[]
 
+  @@unique([name, isDefault])
   @@map("characters")
 }
 

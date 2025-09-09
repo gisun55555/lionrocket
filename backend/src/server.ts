@@ -32,9 +32,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// API 라우트 (추후 추가)
-// app.use('/api/auth', require('./routes/auth'));
-// app.use('/api/characters', require('./routes/characters'));
+// API 라우트
+import authRoutes from './routes/auth';
+import characterRoutes from './routes/characters';
+
+app.use('/api/auth', authRoutes);
+app.use('/api/characters', characterRoutes);
 // app.use('/api/messages', require('./routes/messages'));
 
 // 에러 핸들링 미들웨어

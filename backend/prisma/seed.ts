@@ -25,16 +25,19 @@ async function main() {
   ];
 
   for (const character of defaultCharacters) {
-    await prisma.character.upsert({
-      where: { 
-        name_isDefault: {
-          name: character.name,
-          isDefault: character.isDefault,
-        }
+    // 기존 기본 캐릭터가 있는지 확인
+    const existingCharacter = await prisma.character.findFirst({
+      where: {
+        name: character.name,
+        isDefault: true,
       },
-      update: {},
-      create: character,
     });
+
+    if (!existingCharacter) {
+      await prisma.character.create({
+        data: character,
+      });
+    }
   }
 
   console.log('✅ 기본 캐릭터 3개가 생성되었습니다.');

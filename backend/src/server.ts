@@ -35,9 +35,11 @@ app.get('/', (req, res) => {
 // API 라우트
 import authRoutes from './routes/auth';
 import characterRoutes from './routes/characters';
+import uploadRoutes from './routes/upload';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/characters', characterRoutes);
+app.use('/api/upload', uploadRoutes);
 // app.use('/api/messages', require('./routes/messages'));
 
 // 에러 핸들링 미들웨어

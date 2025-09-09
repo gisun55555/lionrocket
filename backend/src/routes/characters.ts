@@ -8,12 +8,12 @@ const router = Router();
 router.get('/default', CharacterController.getDefaultCharacters);
 
 // 보호된 라우트 (인증 필요)
+router.get('/check-name', authenticateToken, CharacterController.checkNameExists);
 router.get('/', optionalAuth, CharacterController.getAllCharacters);
 router.get('/user', authenticateToken, CharacterController.getUserCharacters);
 router.get('/:id', CharacterController.getCharacterById);
 router.post('/', authenticateToken, CharacterController.createCharacter);
 router.put('/:id', authenticateToken, CharacterController.updateCharacter);
 router.delete('/:id', authenticateToken, CharacterController.deleteCharacter);
-router.get('/check-name', authenticateToken, CharacterController.checkNameExists);
 
 export default router;

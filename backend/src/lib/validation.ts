@@ -44,8 +44,7 @@ export const createCharacterSchema = z.object({
     .max(1000, '캐릭터 프롬프트는 1000자 이하여야 합니다'),
   thumbnail: z
     .string()
-    .url('유효한 이미지 URL을 입력해주세요')
-    .optional(),
+    .optional(), // URL 또는 파일 경로
 });
 
 // 캐릭터 수정 검증 스키마
@@ -62,8 +61,7 @@ export const updateCharacterSchema = z.object({
     .optional(),
   thumbnail: z
     .string()
-    .url('유효한 이미지 URL을 입력해주세요')
-    .optional(),
+    .optional(), // URL 또는 파일 경로
 });
 
 // 응답 타입
@@ -88,6 +86,19 @@ export interface CharacterResponse {
   updatedAt: string;
 }
 
+// 파일 업로드 검증
+export const fileUploadSchema = z.object({
+  fieldname: z.string(),
+  originalname: z.string(),
+  encoding: z.string(),
+  mimetype: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif'], {
+    message: 'PNG, JPEG, WEBP, AVIF 파일만 업로드 가능합니다'
+  }),
+  size: z.number().max(5 * 1024 * 1024, '파일 크기는 5MB 이하여야 합니다'), // 5MB
+  buffer: z.instanceof(Buffer),
+});
+
 // 검증 미들웨어 타입
 export type CreateCharacterInput = z.infer<typeof createCharacterSchema>;
 export type UpdateCharacterInput = z.infer<typeof updateCharacterSchema>;
+export type FileUploadInput = z.infer<typeof fileUploadSchema>;

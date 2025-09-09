@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계
+  characters Character[]
+  messages   Message[]
+
+  @@map("users")
+}
+
+model Character {
+  id          String   @id @default(cuid())
+  name        String
+  prompt      String
+  thumbnail   String?  // 이미지 파일 경로
+  isDefault   Boolean  @default(false) // 기본 제공 캐릭터 여부
+  userId      String?  // null이면 기본 캐릭터
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 관계
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@map("characters")
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  isUser      Boolean  // true: 사용자 메시지, false: AI 메시지
+  userId      String
+  characterId String
+  createdAt   DateTime @default(now())
+
+  // 관계
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}

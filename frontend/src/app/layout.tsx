@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReactQueryProvider } from "@/shared/provider/react-query-provider";
 import { ThemeProvider } from "@/shared/provider/theme-provider";
+import { AuthProvider } from "@/shared/provider/auth-provider";
 import { GlobalHeader } from "@/shared/components/global-header";
 
 const geistSans = Geist({
@@ -37,8 +38,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ReactQueryProvider>
-            <GlobalHeader />
-            <main>{children}</main>
+            <AuthProvider>
+              <GlobalHeader />
+              <main>{children}</main>
+            </AuthProvider>
           </ReactQueryProvider>
         </ThemeProvider>
       </body>

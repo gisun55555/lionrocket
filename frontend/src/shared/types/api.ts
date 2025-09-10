@@ -56,7 +56,7 @@ export interface Message {
   id: string;
   content: string;
   isUser: boolean;
-  userId: string;
+  userId?: string;
   characterId: string;
   createdAt: string;
 }
@@ -104,4 +104,32 @@ export interface CheckEmailParams {
 
 export interface CheckCharacterNameParams {
   name: string;
+}
+
+// 메시지 관련 타입
+export interface Message {
+  id: string;
+  content: string;
+  isUser: boolean;
+  userId?: string;
+  characterId: string;
+  createdAt: string;
+}
+
+export interface Conversation {
+  characterId: string;
+  characterName: string;
+  messages: Message[];
+  totalMessages: number;
+  lastMessageAt: string;
+}
+
+export interface SendMessageRequest {
+  characterId: string;
+  content: string;
+}
+
+export interface SendMessageResponse {
+  userMessage: Message;
+  aiMessage: Message;
 }

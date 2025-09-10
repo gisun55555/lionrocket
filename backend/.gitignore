@@ -1,5 +1,16 @@
 node_modules
-# Keep environment variables out of version control
+
+# allow example env files (commit-safe)
+!.env.example
+
+# environment variable files
 .env
+.env.local
+.env.development
+.env.production
+.env.test
+
 
 /src/generated/prisma
+
+

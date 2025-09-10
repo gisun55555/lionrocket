@@ -7,5 +7,8 @@ export * from './use-characters';
 // 메시지 관련 훅
 export * from './use-messages';
 
+// 채팅 동기화 훅
+export * from './use-chat-sync';
+
 // 파일 업로드 관련 훅
 export * from './use-upload';

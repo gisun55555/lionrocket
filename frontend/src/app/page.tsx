@@ -3,7 +3,7 @@
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { LoginModal } from '@/shared/components/login-modal';
-import { MessageCircle, Users, Sparkles, ArrowRight, Bot } from 'lucide-react';
+import { MessageCircle, Users, Sparkles, ArrowRight, Bot, Brain, Heart } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -18,11 +18,19 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-20 text-center">
         <div className="max-w-4xl mx-auto">
           {/* Main Title */}
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+              <Brain className="h-8 w-8 text-white" />
+            </div>
+            <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-500 rounded-full flex items-center justify-center shadow-lg">
+              <Heart className="h-8 w-8 text-white" />
+            </div>
+          </div>
           <h1 className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-white mb-6">
-            🎭 AI 캐릭터들과
+            AI 캐릭터들과
             <br />
             <span className="text-blue-600 dark:text-blue-400">
               특별한 대화
@@ -48,7 +56,7 @@ export default function HomePage() {
               // 로그인된 사용자를 위한 버튼들
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/characters">
-                  <Button size="lg" className="text-lg px-8 py-6">
+                  <Button size="lg" className="text-lg px-8 py-6 w-full sm:w-auto">
                     <Bot className="mr-2 h-5 w-5" />
                     캐릭터 선택하기
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -62,7 +70,7 @@ export default function HomePage() {
               // 비로그인 사용자를 위한 버튼들
               <>
                 <Link href="/characters">
-                  <Button size="lg" className="text-lg px-8 py-6">
+                  <Button size="lg" className="text-lg px-8 py-6 w-full sm:w-auto">
                     <Sparkles className="mr-2 h-5 w-5" />
                     시작하기
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -71,7 +79,7 @@ export default function HomePage() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="text-lg px-8 py-6"
+                  className="text-lg px-8 py-6 w-full sm:w-auto"
                   onClick={() => setIsLoginModalOpen(true)}
                 >
                   로그인
@@ -153,7 +161,7 @@ export default function HomePage() {
       </section>
 
       {/* Quote Section */}
-      <section className="container mx-auto px-4 py-16 text-center">
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-16 text-center">
         <blockquote className="text-xl md:text-2xl text-slate-700 dark:text-slate-300 italic max-w-3xl mx-auto">
           &ldquo;창작자는 방향을 정하고, 젠버스는 그 길을 구현합니다.&rdquo;
         </blockquote>

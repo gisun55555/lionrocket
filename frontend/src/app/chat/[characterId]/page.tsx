@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Send, ArrowLeft, Bot, User, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Send, ArrowLeft, Bot, User, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
-import { useCharacter, useConversation, useSendMessage } from '@/shared/hooks';
+import { useCharacter, useConversation, useSendMessage, useChatSync } from '@/shared/hooks';
 import type { Message } from '@/shared/types/api';
 
 export default function ChatPage() {
@@ -17,7 +17,6 @@ export default function ChatPage() {
   const characterId = params.characterId as string;
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -25,6 +24,9 @@ export default function ChatPage() {
   const { data: character, isLoading: characterLoading } = useCharacter(characterId);
   const { data: conversation, isLoading: conversationLoading } = useConversation(characterId);
   const sendMessageMutation = useSendMessage();
+  
+  // 채팅 동기화
+  const { broadcastMessage, broadcastTyping } = useChatSync(characterId);
 
   // 메시지 전송 핸들러
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -36,10 +38,18 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
-      await sendMessageMutation.mutateAsync({
+      const response = await sendMessageMutation.mutateAsync({
         characterId,
         content: messageContent,
       });
+      
+      // 다른 탭에 메시지 동기화
+      if (response.userMessage) {
+        broadcastMessage(response.userMessage);
+      }
+      if (response.aiMessage) {
+        broadcastMessage(response.aiMessage);
+      }
     } catch (error) {
       console.error('메시지 전송 실패:', error);
     } finally {
@@ -47,20 +57,21 @@ export default function ChatPage() {
     }
   };
 
-  const toggleMessageExpansion = (messageId: string) => {
-    setExpandedMessages(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(messageId)) {
-        newSet.delete(messageId);
-      } else {
-        newSet.add(messageId);
-      }
-      return newSet;
-    });
-  };
 
-  const isMessageLong = (content: string) => content.length > 200;
-  const isExpanded = (messageId: string) => expandedMessages.has(messageId);
+  // 타이핑 상태 동기화
+  useEffect(() => {
+    if (isTyping) {
+      broadcastTyping(true);
+      const timer = setTimeout(() => {
+        setIsTyping(false);
+        broadcastTyping(false);
+      }, 3000); // 3초 후 자동으로 타이핑 상태 해제
+      
+      return () => clearTimeout(timer);
+    } else {
+      broadcastTyping(false);
+    }
+  }, [isTyping, broadcastTyping]);
 
   // 스크롤을 맨 아래로 이동
   const scrollToBottom = () => {
@@ -106,40 +117,42 @@ export default function ChatPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700">
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 shadow-sm">
-        <div className="container mx-auto px-4 py-5">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/characters')}
-              className="flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              뒤로가기
-            </Button>
-            
+      <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Avatar className="w-12 h-12 ring-4 ring-blue-500/20 dark:ring-blue-400/30 shadow-lg">
-                <AvatarImage src={character.thumbnail || undefined} alt={character.name} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-lg font-semibold">
-                  {character.name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                  {character.name}
-                </h1>
-                <div className="flex items-center gap-2">
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    character.isDefault 
-                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white' 
-                      : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-                  }`}>
-                    {character.isDefault ? '✨ 기본 캐릭터' : '👤 내 캐릭터'}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/characters')}
+                className="flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                뒤로가기
+              </Button>
+              
+              <div className="flex items-center gap-3">
+                <Avatar className="w-10 h-10 ring-2 ring-blue-500/20 dark:ring-blue-400/30 shadow-lg">
+                  <AvatarImage src={character.thumbnail || undefined} alt={character.name} />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                    {character.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {character.name}
+                  </h1>
+                  <div className="flex items-center gap-2">
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      character.isDefault 
+                        ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white' 
+                        : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
+                    }`}>
+                      {character.isDefault ? '✨ 기본 캐릭터' : '👤 내 캐릭터'}
+                    </div>
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">온라인</span>
                   </div>
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">온라인</span>
                 </div>
               </div>
             </div>
@@ -148,8 +161,8 @@ export default function ChatPage() {
       </div>
 
       {/* 채팅 영역 */}
-      <div className="container mx-auto px-4 py-6">
-        <Card className="h-[calc(100vh-200px)] shadow-2xl border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+        <Card className="h-[calc(100vh-140px)] shadow-2xl border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
           <CardContent className="p-0 h-full flex flex-col">
             {/* 메시지 목록 */}
             <ScrollArea ref={scrollAreaRef} className="flex-1 p-6 overflow-hidden">
@@ -189,45 +202,11 @@ export default function ChatPage() {
                         msg.isUser
                           ? 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600'
                           : 'bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-blue-500/25'
-                      } ${
-                        isMessageLong(msg.content) && !isExpanded(msg.id)
-                          ? 'max-h-32 overflow-hidden'
-                          : 'max-h-96 overflow-hidden'
                       }`}
                     >
-                      <div className={`overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent ${
-                        isMessageLong(msg.content) && !isExpanded(msg.id) ? 'max-h-20' : 'max-h-80'
-                      }`}>
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium break-words">
-                          {msg.content}
-                        </p>
-                      </div>
-                      
-                      {/* 긴 메시지일 때 확장/축소 버튼 */}
-                      {isMessageLong(msg.content) && (
-                        <button
-                          onClick={() => toggleMessageExpansion(msg.id)}
-                          className={`w-full mt-2 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${
-                            msg.isUser
-                              ? 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500'
-                              : 'bg-white/20 text-white hover:bg-white/30'
-                          }`}
-                        >
-                          <div className="flex items-center justify-center gap-1">
-                            {isExpanded(msg.id) ? (
-                              <>
-                                <ChevronUp className="h-3 w-3" />
-                                접기
-                              </>
-                            ) : (
-                              <>
-                                <ChevronDown className="h-3 w-3" />
-                                더 보기
-                              </>
-                            )}
-                          </div>
-                        </button>
-                      )}
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium break-words">
+                        {msg.content}
+                      </p>
                       
                       <p className={`text-xs mt-3 ${
                         msg.isUser ? 'text-slate-500 dark:text-slate-400' : 'text-blue-100'

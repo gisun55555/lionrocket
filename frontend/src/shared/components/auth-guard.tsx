@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useIsAuthenticated } from '@/shared/hooks/use-auth';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
@@ -15,6 +15,28 @@ interface AuthGuardProps {
 export function AuthGuard({ children, fallback }: AuthGuardProps) {
   const { isAuthenticated, isLoading } = useIsAuthenticated();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // 클라이언트에서만 렌더링
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700 flex items-center justify-center">
+        <div className="w-96 shadow-2xl border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg p-8 text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+            로딩 중...
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400">
+            잠시만 기다려주세요.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
